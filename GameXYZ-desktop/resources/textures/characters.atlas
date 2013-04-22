@@ -1,0 +1,54 @@
+
+characters.png
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+click
+  rotate: false
+  xy: 1, 19
+  size: 60, 60
+  orig: 60, 60
+  offset: 0, 0
+  index: -1
+anim
+  rotate: false
+  xy: 63, 47
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 0
+anim
+  rotate: false
+  xy: 97, 47
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+anim
+  rotate: false
+  xy: 131, 47
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+hero
+  rotate: false
+  xy: 63, 13
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+hero_sword
+  rotate: false
+  xy: 97, 13
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+default
+  rotate: false
+  xy: 1, 1
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
