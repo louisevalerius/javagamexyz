@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.blogspot.javagamexyz.gamexyz.GameXYZ;
 
 public abstract class AbstractScreen implements Screen {
@@ -12,11 +13,13 @@ public abstract class AbstractScreen implements Screen {
 	protected final GameXYZ game;
 	protected final World world;
 	protected final OrthographicCamera camera;
+	protected final SpriteBatch batch;
 	
-	public AbstractScreen(GameXYZ game, World world) {
+	public AbstractScreen(GameXYZ game, World world, SpriteBatch batch) {
 		this.game = game;
 		this.world = world;
 		camera = new OrthographicCamera();
+		this.batch = batch;
 	}
 	
 	@Override

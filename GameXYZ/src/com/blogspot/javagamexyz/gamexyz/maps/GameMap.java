@@ -3,11 +3,14 @@ package com.blogspot.javagamexyz.gamexyz.maps;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.ObjectMap;
+import com.blogspot.javagamexyz.gamexyz.custom.Pair;
 import com.blogspot.javagamexyz.gamexyz.pathfinding.AStarPathFinder;
 
 public class GameMap {
 	public int[][] map;
-	public int[][] entityLocations;
+	private int[][] entityByCoord;
+	private ObjectMap<Integer,Pair> coordByEntity;
 	public int width, height;
 	public Pixmap pixmap;
 	public Texture texture;
@@ -19,7 +22,8 @@ public class GameMap {
 		width = map.length;
 		height = map[0].length;
 		
-		entityLocations = new int[width][height];
+		entityByCoord = new int[width][height];
+		coordByEntity = new ObjectMap<Integer,Pair>();
 		
 		pixmap = new Pixmap(width,height,Pixmap.Format.RGBA8888);
 		
@@ -28,7 +32,7 @@ public class GameMap {
 				pixmap.setColor(getColor(map[i][j]));
 				pixmap.drawPixel(i, j);
 				
-				entityLocations[i][j] = -1;
+				entityByCoord[i][j] = -1;
 				
 			}
 		}
@@ -36,7 +40,7 @@ public class GameMap {
 		texture = new Texture(pixmap);
 		pixmap.dispose();
 		
-		pathFinder = new AStarPathFinder(map, 100);
+		pathFinder = new AStarPathFinder(this, 100);
 		
 	}
 	
@@ -57,11 +61,34 @@ public class GameMap {
 	}
 	
 	public int getEntityAt(int x, int y) {
-		return entityLocations[x][y];
+		if (x < 0 || x > entityByCoord.length - 1 || y < 0 || y > entityByCoord[0].length - 1) return -1;
+		return entityByCoord[x][y];
+	}
+	
+	public Pair getCoordinatesFor(int entityId) {
+		if (coordByEntity.containsKey(entityId)) return coordByEntity.get(entityId);
+		return null;
 	}
 	
 	public boolean cellOccupied(int x, int y) {
-		return (entityLocations[x][y] > -1);
+		return (entityByCoord[x][y] > -1);
+	}
+	
+	public void addEntity(int id, int x, int y) {
+		entityByCoord[x][y] = id;
+		coordByEntity.put(id, new Pair(x,y));
+	}
+	
+	public void moveEntity(int id, int x, int y) {
+		Pair old = coordByEntity.put(id, new Pair(x,y));
+		entityByCoord[old.x][old.y] = -1;
+		entityByCoord[x][y] = id;
+	}
+	
+	public void removeEntity(int id) {
+		Pair old = coordByEntity.get(id);
+		entityByCoord[old.x][old.y] = -1;
+		coordByEntity.remove(id);
 	}
 	
 }

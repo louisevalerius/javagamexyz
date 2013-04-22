@@ -16,7 +16,7 @@ public class GameXYZ extends Game {
 	
 	public World world;
 	private SpriteBatch batch;
-
+	
 	public GameXYZ(int width, int height) {
 		WINDOW_WIDTH = width;
 		WINDOW_HEIGHT = height;
@@ -34,5 +34,6 @@ public class GameXYZ extends Game {
     	world.initialize(); 
     	
     	setScreen(new OverworldScreen(this, batch, world));
+    	//setScreen(new WidgetScreen(this, world, batch));
 	}
 }

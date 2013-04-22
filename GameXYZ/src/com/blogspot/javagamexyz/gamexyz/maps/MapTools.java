@@ -64,9 +64,19 @@ public class MapTools {
 		return new Pair(posx,posy);
 	}
 	
-	public static FloatPair world2window(int x, int y) {
-		float posX= 6f + (x + 0.5f)*34;
-		float posY= 38*(0.5f + 0.5f*(x%2) + y);
+	public static Pair libgdx2world(float x, float y) {
+		Vector3 pos = new Vector3(x,y,0);
+		int posx = (int)((pos.x - 6f) / (float)col_multiple);
+		int posy = (int)((pos.y - (float)row_multiple*(posx%2)/2) / (float)row_multiple);
+		return new Pair(posx,posy);
+	}
+	
+	public static FloatPair world2window(float x, float y) {
+		int x0 = (int)x;
+		float dx = x - x0; // purely the decimal part
+		
+		float posX = 5.5f + (x + 0.5f)*col_multiple;
+		float posY = row_multiple*(y + 0.5f + (x0%2)*(0.5f - dx/2f) + (x0+1)%2 * dx/2f);
 		
 		return new FloatPair(posX, posY);
 	}
@@ -79,6 +89,12 @@ public class MapTools {
 	public static int height() {
 		int power = MyMath.pow(2,HexMapGenerator.n);
 		return HexMapGenerator.hmult*power+1;
+	}
+	
+	public static FloatPair getDirectionVector(int x1, int y1, int x2, int y2) {
+		FloatPair cell1 = world2window(x1, y1);
+		FloatPair cell2 = world2window(x2, y2);
+		return new FloatPair(cell2.x-cell1.x, cell2.y-cell1.y);
 	}
 }
 

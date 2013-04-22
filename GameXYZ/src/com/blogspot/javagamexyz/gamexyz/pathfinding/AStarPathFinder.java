@@ -4,11 +4,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import com.badlogic.gdx.utils.Array;
+import com.blogspot.javagamexyz.gamexyz.components.Movable;
+import com.blogspot.javagamexyz.gamexyz.custom.MyQueue;
 import com.blogspot.javagamexyz.gamexyz.custom.Pair;
+import com.blogspot.javagamexyz.gamexyz.maps.GameMap;
 import com.blogspot.javagamexyz.gamexyz.maps.MapTools;
 
 
 /**
+ * A modified path finder implementation starting with Kevin Glass' AStar algorithm
+ * at http://old.cokeandcode.com/pathfinding.  Original header:
+ * 
  * A path finder implementation that uses the AStar heuristic based algorithm
  * to determine a path. 
  * 
@@ -21,6 +27,7 @@ public class AStarPathFinder {
 	private SortedList open = new SortedList();
 	
 	/** The map being searched */
+	private GameMap gameMap;
 	private int[][] map;
 	/** The maximum depth of search we're willing to accept before giving up */
 	private int maxSearchDistance;
@@ -31,13 +38,12 @@ public class AStarPathFinder {
 	/**
 	 * Create a path finder 
 	 * 
-	 * @param heuristic The heuristic used to determine the search order of the map
-	 * @param map The map to be searched
+	 * @param gameMap The map to be searched
 	 * @param maxSearchDistance The maximum depth we'll search before giving up
-	 * @param allowDiagMovement True if the search should try diaganol movement
 	 */
-	public AStarPathFinder(int[][] map, int maxSearchDistance) {
-		this.map = map;
+	public AStarPathFinder(GameMap gameMap, int maxSearchDistance) {
+		this.gameMap = gameMap;
+		this.map = gameMap.map;
 		this.maxSearchDistance = maxSearchDistance;
 		
 		nodes = new Node[map.length][map[0].length];
@@ -49,13 +55,13 @@ public class AStarPathFinder {
 	}
 	
 	/**
-	 * @see PathFinder#findPath(Mover, int, int, int, int)
+	 * @see PathFinder#findPath(int, int, int, int, Movable)
 	 */
-	public Path findPath(int sx, int sy, int tx, int ty) {
+	public Path findPath(int sx, int sy, int tx, int ty, Movable mover) {
 		// easy first check, if the destination is blocked, we can't get there
-//		if (map.blocked(mover, tx, ty)) {
-//			return null;
-//		}
+		if (isCellBlocked(tx,ty,mover)) {
+			return null;
+		}
 		
 		// initial state for A*. The closed group is empty. Only the starting
 		// tile is in the open list and it's cost is zero, i.e. we're already there
@@ -67,7 +73,7 @@ public class AStarPathFinder {
 		
 		nodes[tx][ty].parent = null;
 		
-		// while we haven't found the goal and haven't exceeded our max search depth
+		// While we still have more nodes to search and haven't exceeded our max search depth
 		int maxDepth = 0;
 		while ((maxDepth < maxSearchDistance) && (open.size() != 0)) {
 			// pull out the first node in our open list, this is determined to 
@@ -81,20 +87,27 @@ public class AStarPathFinder {
 			addToClosed(current);
 			
 			Array<Pair> neighbors = MapTools.getNeighbors(current.x, current.y);
-			// search through all the neighbours of the current node evaluating
+			// search through all the neighbors of the current node evaluating
 			// them as next steps
 			for (Pair n : neighbors) {
 				int xp = n.x;
 				int yp = n.y;
-				float nextStepCost = current.cost + getMovementCost(current.x,current.y,xp,yp);
+				float nextStepCost = current.cost + mover.terrainCost[map[xp][yp]];//getMovementCost(current.x,current.y,xp,yp);
 				Node neighbor = nodes[xp][yp];
+				
+				// If this step exceeds the movers energy, don't even bother with it
+				if (nextStepCost > mover.energy) continue;
+				
+				// Check to see if we have found a new shortest route to this neighbor
 				if (nextStepCost < neighbor.cost) {
 					if (inOpenList(neighbor)) removeFromOpen(neighbor);
 					if (inClosedList(neighbor)) removeFromClosed(neighbor);
 				}
+				
+				// If it was a new shor
 				if (!inOpenList(neighbor) && !inClosedList(neighbor)) {
 					neighbor.cost = nextStepCost;
-					neighbor.heuristic = (float)MapTools.distance(xp,yp,tx,ty);
+					neighbor.heuristic = (float)MapTools.distance(xp, yp, tx, ty);
 					maxDepth = Math.max(maxDepth, neighbor.setParent(current));
 					addToOpen(neighbor);
 				}
@@ -120,6 +133,55 @@ public class AStarPathFinder {
 		
 		// thats it, we have our path 
 		return path;
+	}
+	
+	
+	/**
+	 * 
+	 * @param x The x coordinate of the mover
+	 * @param y The y coordinate of the mover
+	 * @return An Array<Pair> containing the coordinates for all cells the mover can reach
+	 */
+	public Array<Pair> getReachableCells(int x, int y, Movable mover) {
+		Array<Pair> reachableCells = new Array<Pair>();
+		MyQueue<Node> open = new MyQueue<Node>();
+		closed.clear();
+		Node start = nodes[x][y];
+		start.depth = 0;
+		start.cost = 0;
+		open.push(start);
+		while (open.size() > 0) {
+			// poll() the open queue
+			Node current = open.poll();
+			
+			for (Pair n : MapTools.getNeighbors(current.x,current.y)) {
+				Node neighbor = nodes[n.x][n.y];
+				float nextStepCost = current.cost + mover.terrainCost[map[n.x][n.y]];
+				
+				// If the cell is beyond our reach, or otherwise blocked, ignore it
+				if (nextStepCost > mover.energy || isCellBlocked(n.x,n.y,mover)) continue;
+				
+				// Check to see if we have found a new shortest route to this neighbor, in
+				// which case it must be totally reconsidered
+				if (nextStepCost < neighbor.cost) {
+					if (inClosedList(neighbor)) removeFromClosed(neighbor);
+					if (open.contains(neighbor, false)) open.remove(neighbor,false);
+				}
+
+				if (!open.contains(neighbor, false) && !inClosedList(neighbor)) {
+					neighbor.cost = nextStepCost;
+					open.push(neighbor);
+				}
+			}
+			addToClosed(current);
+		}
+		
+		for (Node n : closed) {
+			if (n.x != x || n.y != y) reachableCells.add(new Pair(n.x,n.y));
+		}
+		
+		return reachableCells;
+
 	}
 
 	/**
@@ -219,10 +281,13 @@ public class AStarPathFinder {
 	 * @return The cost of movement through the given tile
 	 */
 	public float getMovementCost(int sx, int sy, int tx, int ty) {
-		return (float)map[tx][ty] + 1;
-		//return map.getCost(mover, sx, sy, tx, ty);
+		return (float)map[tx][ty]*3f + 1;
 	}
 
+	private boolean isCellBlocked(int x, int y, Movable mover) {
+		return ((mover.terrainBlocked[map[x][y]]) || gameMap.cellOccupied(x, y));
+	}
+	
 	/**
 	 * Get the heuristic cost for the given location. This determines in which 
 	 * order the locations are processed.
@@ -374,6 +439,10 @@ public class AStarPathFinder {
 			}
 			
 			return false;
+		}
+		
+		public String toString() {
+			return "("+x+","+y+")";
 		}
 	}
 }

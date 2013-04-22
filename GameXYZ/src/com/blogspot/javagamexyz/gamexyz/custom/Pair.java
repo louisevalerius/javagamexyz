@@ -7,7 +7,17 @@ public class Pair {
 	}
 	public int x, y;
 	
+	public boolean equals(Object obj) {
+		if (obj instanceof Pair) return equals((Pair)obj);
+		return false;
+	}
+	
 	public boolean equals(Pair p) {
-		return ((this.x == p.x) && (this.y==p.y));
+		if (x == p.x && y == p.y) return true;
+		return false;
+	}
+	
+	public String toString() {
+		return "("+x+","+y+")";
 	}
 }

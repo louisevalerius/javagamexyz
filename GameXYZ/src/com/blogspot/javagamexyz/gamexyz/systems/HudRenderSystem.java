@@ -15,9 +15,6 @@ public class HudRenderSystem extends VoidEntitySystem {
 	private BitmapFont font;
 	private OrthographicCamera camera;
 	
-	public HudRenderSystem(OrthographicCamera camera) {
-	}
-	
 	public HudRenderSystem(OrthographicCamera camera, SpriteBatch batch) {
 		this.batch = batch;
 		this.camera = camera;

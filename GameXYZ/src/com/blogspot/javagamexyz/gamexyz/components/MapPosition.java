@@ -13,5 +13,10 @@ public class MapPosition extends Component {
 		this(0,0);
 	}
 	
-	public int x, y;	
+	public MapPosition(float x, float y) {
+		this.x = x;
+		this.y = y;
+	}
+	
+	public float x, y;	
 }
